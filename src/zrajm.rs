@@ -5,6 +5,8 @@ use std::io::{self, prelude::*, BufReader};
 use std::cmp::Ordering;
 use regex::Regex;
 
+use crate::klingon::letters;
+
 #[derive(Debug, Clone, Eq, PartialEq, Serialize)]
 pub struct ZrajmWord {
     pub homonym: i8,
@@ -60,8 +62,8 @@ impl PartialOrd for ZrajmWord {
 
 impl Ord for ZrajmWord {
     fn cmp(&self, other: &ZrajmWord) -> Ordering {
-        let a = (&self.tlh, self.homonym, self.sense, self.subsense);
-        let b = (&other.tlh, other.homonym, other.sense, other.subsense);
+        let a = (letters(self.tlh.as_str()), self.homonym, self.sense, self.subsense);
+        let b = (letters(other.tlh.as_str()), other.homonym, other.sense, other.subsense);
         a.cmp(&b)
     }
 }
@@ -179,28 +181,15 @@ impl ZrajmDictionary {
     fn push_word(&mut self, word: &ZrajmWord) {
         self.words.push(word.clone());
 
-        if !self.tlh_index.contains_key(&word.tlh) {
-            self.tlh_index.insert(word.tlh.clone(), HashSet::new());
-        }
-        self.tlh_index.get_mut(&word.tlh).unwrap().insert(word.clone());
-
-        if !self.pos_index.contains_key(&word.pos) {
-            self.pos_index.insert(word.pos, HashSet::new());
-        }
-        self.pos_index.get_mut(&word.pos).unwrap().insert(word.clone());
+        self.tlh_index.entry(word.tlh.clone()).or_insert(HashSet::new()).insert(word.clone());
+        self.pos_index.entry(word.pos).or_insert(HashSet::new()).insert(word.clone());
 
         for index_word in word.en_index() {
-            if !self.en_index.contains_key(&index_word) {
-                self.en_index.insert(index_word.clone(), HashSet::new());
-            }
-            self.en_index.get_mut(&index_word).unwrap().insert(word.clone());
+            self.en_index.entry(index_word).or_insert(HashSet::new()).insert(word.clone());
         }
 
         for index_word in word.sv_index() {
-            if !self.sv_index.contains_key(&index_word) {
-                self.sv_index.insert(index_word.clone(), HashSet::new());
-            }
-            self.sv_index.get_mut(&index_word).unwrap().insert(word.clone());
+            self.sv_index.entry(index_word).or_insert(HashSet::new()).insert(word.clone());
         }
     }
 }

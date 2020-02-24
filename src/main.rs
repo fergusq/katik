@@ -3,6 +3,8 @@
 mod zrajm;
 use zrajm::*;
 
+mod klingon;
+
 extern crate regex;
 #[macro_use] extern crate lazy_static;
 
