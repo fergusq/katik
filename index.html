@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<title>Klingonsk ordbok</title>
+
+<h1>Klingonsk ordbok</h1>
+
+<input id=search type=text autocomplete=off style=width:100%;>
+
+<hr>
+
+<div id=results></div>
+
+<script>
+    function escape(text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    }
+    search.oninput = async event => {
+        const text = event.target.value
+        const words = text.split(" ")
+        const lastWord = words[words.length-1]
+        const response = await fetch("/complete/" + lastWord).then(r => r.json())
+        let result = ""
+
+        for (const parse of response.parsed) {
+            result += "<b>Analys:</b>"
+            result += "<dl>"
+            for (const word of parse) {
+                result += "<dh>" + escape(word[0].tlh) + "</dh>"
+                for (const homonym of word) {
+                    result += "<dd>" + escape(homonym.sv.join(", ")) + "</dd>"
+                }
+            }
+            result += "</dl>"
+            result += "<hr>"
+        }
+        
+        result += "<table>"
+        for (const suggestion of response.suggestions) {
+            result += `<tr><td><b>${escape(suggestion.tlh)}</b></td><td>${escape(suggestion.sv.join(", "))}</td></tr>`
+        }
+        result += "</table>"
+        results.innerHTML = result
+    }
+</script>

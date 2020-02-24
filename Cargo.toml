@@ -1,0 +1,18 @@
+[package]
+name = "katik"
+version = "0.1.0"
+authors = ["Iikka Hauhio <iikka.hauhio@helsinki.fi>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+regex = "1"
+lazy_static = "1.4.0"
+cursive = "0.14"
+enumset = "0.4.4"
+clap = "2.33.0"
+rocket = "0.4.2"
+rocket_contrib = "0.4.2"
+serde = "*"
+serde_derive = "*"
