@@ -2,9 +2,10 @@ use std::hash::{Hash, Hasher};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
+use std::cmp::Ordering;
 use regex::Regex;
 
-#[derive(Debug, Clone, Eq, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
 pub struct ZrajmWord {
     pub homonym: i8,
     pub sense: i8,
@@ -45,12 +46,6 @@ impl ZrajmWord {
     }
 }
 
-impl PartialEq for ZrajmWord {
-    fn eq(&self, other: &ZrajmWord) -> bool {
-        self.id == other.id
-    }
-}
-
 impl Hash for ZrajmWord {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.id.hash(state);
@@ -58,13 +53,13 @@ impl Hash for ZrajmWord {
 }
 
 impl PartialOrd for ZrajmWord {
-    fn partial_cmp(&self, other: &ZrajmWord) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &ZrajmWord) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for ZrajmWord {
-    fn cmp(&self, other: &ZrajmWord) -> std::cmp::Ordering {
+    fn cmp(&self, other: &ZrajmWord) -> Ordering {
         let a = (&self.tlh, self.homonym, self.sense, self.subsense);
         let b = (&other.tlh, other.homonym, other.sense, other.subsense);
         a.cmp(&b)

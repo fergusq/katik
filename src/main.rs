@@ -6,7 +6,9 @@ use zrajm::*;
 extern crate regex;
 #[macro_use] extern crate lazy_static;
 
+use std::cmp::Ordering;
 use std::collections::{HashSet, BTreeSet};
+use std::io::Cursor;
 
 use cursive::Cursive;
 use cursive::traits::*;
@@ -22,7 +24,8 @@ use clap::{App, Arg};
 #[macro_use] extern crate serde_derive;
 
 use rocket::State;
-use rocket::response::NamedFile;
+use rocket::response::{Responder, Response};
+use rocket::http::{ContentType, Status};
 use rocket_contrib::json::Json;
 
 fn main() {
@@ -60,8 +63,12 @@ fn server(dict: ZrajmDictionary) {
 }
 
 #[get("/")]
-fn server_root() -> Result<NamedFile, std::io::Error> {
-    NamedFile::open("index.html")
+fn server_root() -> impl Responder<'static> {
+    Response::build()
+        .status(Status::Ok)
+        .header(ContentType::HTML)
+        .sized_body(Cursor::new(include_bytes!("../static/index.html") as &[u8]))
+        .finalize()
 }
 
 #[get("/complete/<word>")]
@@ -72,13 +79,13 @@ fn server_complete(word: String, dict: State<ZrajmDictionary>) -> Json<CompleteR
 #[derive(Serialize)]
 struct CompleteResponse {
     parsed: HashSet<Vec<BTreeSet<ZrajmWord>>>,
-    suggestions: BTreeSet<ZrajmWord>,
+    suggestions: Vec<ZrajmWord>,
 }
 
 fn completion_json(dict: &ZrajmDictionary, word: &str) -> CompleteResponse {
     let grammar = grammar();
     let mut parsed_words = HashSet::new();
-    let mut suggestion_words = BTreeSet::new();
+    let mut suggestion_words = HashSet::new();
     for mut g in grammar {
         let (ending, parsed, suggestions) = complete(&dict, &mut g.1, word);
         //println!(" {} {}", ending, suggestions.len());
@@ -90,9 +97,21 @@ fn completion_json(dict: &ZrajmDictionary, word: &str) -> CompleteResponse {
         }
         suggestion_words.extend(suggestions)
     }
+    let mut suggestions = suggestion_words.into_iter().collect::<Vec<_>>();
+    suggestions.sort_by(|a, b| {
+        let asw = a.tlh.starts_with(word);
+        let bsw = b.tlh.starts_with(word);
+        if asw && !bsw {
+            Ordering::Less
+        } else if !asw && bsw {
+            Ordering::Greater
+        } else {
+            a.cmp(b)
+        }
+    });
     CompleteResponse {
         parsed: parsed_words,
-        suggestions: suggestion_words,
+        suggestions,
     }
 }
 
@@ -182,7 +201,7 @@ fn complete_pos(dict: &ZrajmDictionary, mut parsed: Vec<(String, ZrajmPOS)>, gra
     if let Some(index_words) = dict.pos_index.get(&grammar[0].0) {
         dwords.extend(index_words);
     }
-    dwords.sort_by(|a, b| b.tlh.trim_end_matches("-").len().cmp(&a.tlh.trim_end_matches("-").len()));
+    dwords.sort_by(|a, b| b.tlh.len().cmp(&a.tlh.len()));
     for dword in dwords {
         let dword_ending = dword.tlh.trim_end_matches("-");
         // Valitaan ahneesti
@@ -207,7 +226,7 @@ fn complete_pos(dict: &ZrajmDictionary, mut parsed: Vec<(String, ZrajmPOS)>, gra
     let mut new_grammar = grammar.clone();
     new_grammar.remove(0);
     let (word2, parsed2, grammar2) = complete_pos(dict, parsed.clone(), &mut new_grammar, word);
-    if *word == word2 {
+    if word == word2 {
         (String::from(word), parsed, grammar.clone())
     } else {
         (word2, parsed2, grammar2)
@@ -248,7 +267,6 @@ fn grammar() -> Vec<(&'static str, Vec<(ZrajmPOS, bool)>)> {
             (ZrajmPOS::VerbSuffixRover, false),
         ]),
         ("Nominalized verb track", vec![
-            (ZrajmPOS::VerbPrefix, false),
             (ZrajmPOS::Verb, true),
             (ZrajmPOS::VerbSuffixRover, false),
             (ZrajmPOS::VerbSuffix1, false),
