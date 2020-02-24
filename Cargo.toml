@@ -9,10 +9,9 @@ edition = "2018"
 [dependencies]
 regex = "1"
 lazy_static = "1.4.0"
-cursive = "0.14"
-enumset = "0.4.4"
 clap = "2.33.0"
 rocket = "0.4.2"
 rocket_contrib = "0.4.2"
 serde = "*"
 serde_derive = "*"
+klingon-utils = { git = "https://github.com/fergusq/klingon-utils" }
