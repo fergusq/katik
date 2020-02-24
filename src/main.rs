@@ -300,7 +300,7 @@ fn grammar() -> Vec<(&'static str, Vec<(ZrajmPOS, bool)>)> {
             (ZrajmPOS::VerbSuffixRover, false),
             (ZrajmPOS::NounSuffix5, false),
         ]),
-        ("Pronoun track", vec![
+        ("Pronoun track (verb)", vec![
             (ZrajmPOS::Pronoun, true),
             (ZrajmPOS::VerbSuffixRover, false),
             (ZrajmPOS::VerbSuffix1, false),
@@ -322,8 +322,13 @@ fn grammar() -> Vec<(&'static str, Vec<(ZrajmPOS, bool)>)> {
             (ZrajmPOS::VerbSuffix9, true),
             (ZrajmPOS::VerbSuffixRover, false),
         ]),
+        ("Pronoun track (noun)", vec![
+            (ZrajmPOS::Pronoun, true),
+            (ZrajmPOS::NounSuffix5, false),
+        ]),
         ("Numerals", vec![(ZrajmPOS::Numeral, true)]),
         ("Adverbials", vec![(ZrajmPOS::Adverbial, true)]),
         ("Conjunctions", vec![(ZrajmPOS::Conjunction, true)]),
+        ("Question words", vec![(ZrajmPOS::QuestionWord, true)]),
     ]
 }
